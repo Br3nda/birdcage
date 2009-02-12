@@ -34,6 +34,7 @@ if(!GetOptions(\%opt,
      'lj_user=s' => \$lj_user,
      'lj_pass=s' => \$lj_pass,
      'lj_sec=s' => \$lj_sec,
+     'tz=s' => \$tz,
      )) {
    pod2usage(-exitval => 1, 'verbose'=>0);
 }
@@ -60,7 +61,7 @@ $lj_sec = "public" unless ($lj_sec);
 #
 # TIME ZONE
 #
-$tz = "US/Pacific";
+$tz = "US/Pacific" unless ($tz);
 
 #
 # *********************************************************
@@ -197,6 +198,9 @@ if ( not defined($lj_item_id) ) {
 
   --lj_sec
       Security level, can be public, friends, private
+
+  --tz
+      Time Zone used . eg. US/Pacific , NZDT
 
 =head1 DESCRIPTION
 
