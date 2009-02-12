@@ -29,31 +29,25 @@ use Pod::Usage;
 
 if(!GetOptions(\%opt,
      'help|?',
-     'twitter_user' => \$twitter_user,
-     'twitter_pass' => \$twitter_pass,
-     'lj_user' => \$lj_user,
-     'lj_pass' => \$lj_pass,
+     'twitter_user=s' => \$twitter_user,
+     'twitter_pass=s' => \$twitter_pass,
+     'lj_user=s' => \$lj_user,
+     'lj_pass=s' => \$lj_pass,
+     'lj_sec=s' => \$lj_sec,
      )) {
    pod2usage(-exitval => 1, 'verbose'=>0);
 }
 
 pod2usage(-exitval => 0, -verbose => 2) if($opt{'help'});
 
-#
-# TWITTER ACCOUNT INFORMATION
-#
-$twitter_user = "user";
-$twitter_pass = "pass";
 
-#
-# LIVEJOURNAL ACCOUNT INFORMATION
-#
-$lj_user = "user";
-$lj_pass = "pass";
+die pod2usage(-exitval => 1) unless($twitter_user && $twitter_pass && $lj_user && $lj_pass);
+
 #
 # public, friends, private
 #
-$lj_sec = "public";
+$lj_sec = "public" unless ($lj_sec);
+
 #
 # tags
 #
@@ -189,11 +183,20 @@ if ( not defined($lj_item_id) ) {
 
 =head1 SYNOPSIS
 
-   birdcage.pl [options] <filename>
+   birdcage.pl --twitter_user=br3nda --twitter_pass=secret --lj_user=taniwha_nz --lj_pass=secret
 
    Options:
 
    -? --help  detailed help message
+
+  --twitter_user --twitter_pass
+          Your twitter credentials so we can read your feed
+
+  --lj_user --lj_pass
+          Your Live Journal credentials so we can post to your blog
+
+  --lj_sec
+      Security level, can be public, friends, private
 
 =head1 DESCRIPTION
 
