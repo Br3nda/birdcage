@@ -242,17 +242,18 @@ while ( $_ = shift @tweets ) {
 	
 		$tstamp = UnixDate(Date_ConvTZ(ParseDate($tstamp),"UTC",$utc_offset),"%H:%M:%S");
 
-		unshift @entry, "<!--$id--><TR><TD VALIGN=\"top\"><CODE>$tstamp</CODE></TD><TD VALIGN=\"top\">&nbsp;&mdash;&nbsp;</TD><TD VALIGN=\"top\">$text</TD></TR>";
+		unshift @entry, "<!--$id--><li>$tstamp $text</li>";
 	
 	}
 
 }
 
-$entry = '<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">' . "\n";
+$entry = '<ul>';
+foreach $_ ( @entry ) { 
+  $entry .= "$_\n"; 
+}
+$entry .= '</ul>';
 
-foreach $_ ( @entry ) { $entry .= "$_\n"; }
-
-$entry .= '</TABLE>' . "\n";
 
 if ( not $statuses ) {
 	exit 0;
