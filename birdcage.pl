@@ -104,7 +104,6 @@ $version="0.3.5";
 # note, tz is gone, it's read from the status stream now
 #
 # twitter_user=<user>
-# twitter_pass=<pass>
 # lj_user=<user>
 # lj_pass=<pass>
 # # lj_sec can be one of public, friends, private
