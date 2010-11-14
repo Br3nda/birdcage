@@ -124,11 +124,11 @@ use LJ::Simple;
 
 if ( $^O eq "MSWin32" ) {
 
-	$configspec = dirname(abs_path($0)) . "/birdcage.rc";
+  $configspec = dirname(abs_path($0)) . "/birdcage.rc";
 
 } else {
 
-	$configspec = (getpwuid($>))[7] . "/.birdcagerc";
+  $configspec = (getpwuid($>))[7] . "/.birdcagerc";
 
 }
 
@@ -155,16 +155,16 @@ $url .= $config{'since_id'} ? "100&since_id=$config{'since_id'}" : "20";
 
 for ( $i = 0; $i < 3; ++$i ) {
 
-	if ( $tweets_xml = get("$url") ) {
-		last;
-	} else {
-		sleep 5;
-	}
+  if ( $tweets_xml = get("$url") ) {
+    last;
+  } else {
+    sleep 5;
+  }
 
 }
 
 if ( not defined($tweets_xml) ) {
-	die "$0: Twitter request failed";
+  die "$0: Twitter request failed";
 }
 
 @tweets = split '\n', $tweets_xml;
@@ -176,76 +176,68 @@ if ( not defined($tweets_xml) ) {
 
 while ( $_ = shift @tweets ) {
 
-	if ( /<id>(.+)<\/id>/ ) {
-	
-		$id = $1;
-		$latest_id = $id if $id > $latest_id;
+  if ( /<id>(.+)<\/id>/ ) {
+    $id = $1;
+    $latest_id = $id if $id > $latest_id;
+  }
 
-	}
+  if ( /<created_at>(.+)<\/created_at>/ ) {
+  
+    $tstamp = $1;
+  
+  }
+  if ( /<text>(.*)/ ) {
+    $text = $1;
 
-	if ( /<created_at>(.+)<\/created_at>/ ) {
-	
-		$tstamp = $1;
-	
-	}
+    if ( not $text =~ /<\/text>/ ) {
+      do {
+        $_ = shift @tweets;
+        $text .= "<BR>$_";
+      } while ( not $_ =~ /<\/text>/ );
+    }
 
-   	if ( /<text>(.*)/ ) {
+    $text =~ s{</text>$}{};
+    $text =~ s{(http://.+?)(\s|$)}{<a href="\1">\1</a>\2}g;
+    $text =~ s{&amp;lt;}{&lt;}g;
+    $text =~ s{&amp;gt;}{&gt;}g;
 
-		$text = $1;
+  }
+  
+  if ( /<user>/ ) {
 
-		if ( not $text =~ /<\/text>/ ) {
-		
-			do {
-			
-				$_ = shift @tweets;
-				$text .= "<BR>$_";
-				
-			} while ( not $_ =~ /<\/text>/ );
-		
-		}
+    while ( $_ = shift @tweets ) {
 
-		$text =~ s{</text>$}{};
-		$text =~ s{(http://.+?)(\s|$)}{<A HREF="\1">\1</A>\2}g;
-		$text =~ s{&amp;lt;}{&lt;}g;
-		$text =~ s{&amp;gt;}{&gt;}g;
+      last if /<\/user>/;
+  
+      if ( /<utc_offset>(.+)<\/utc_offset>/ ) {
+      
+        $utc_offset_seconds = $1;
+        $utc_offset_hours = $utc_offset_seconds/3600;
+        $utc_offset_minutes = ($utc_offset_seconds-(3600*$utc_offset_hours))/60;
+        if ( $utc_offset_hours < 0 ) {
+          $direction = "-";
+          $utc_offset_hours *= -1;
+        } else {
+          $direction = "+";
+        }
+          
+        $utc_offset = sprintf("%s%02d%02d",$direction,$utc_offset_hours,$utc_offset_minutes);
+  
+      }
+      
+    }
+    
+  }
+  
+  if ( /<\/status>/ ) {
 
-	}
-	
-	if ( /<user>/ ) {
+    $statuses++;
+  
+    $tstamp = UnixDate(Date_ConvTZ(ParseDate($tstamp),"UTC",$utc_offset),"%H:%M:%S");
 
-		while ( $_ = shift @tweets ) {
-
-			last if /<\/user>/;
-	
-			if ( /<utc_offset>(.+)<\/utc_offset>/ ) {
-			
-				$utc_offset_seconds = $1;
-				$utc_offset_hours = $utc_offset_seconds/3600;
-				$utc_offset_minutes = ($utc_offset_seconds-(3600*$utc_offset_hours))/60;
-				if ( $utc_offset_hours < 0 ) {
-					$direction = "-";
-					$utc_offset_hours *= -1;
-				} else {
-					$direction = "+";
-				}
-					
-				$utc_offset = sprintf("%s%02d%02d",$direction,$utc_offset_hours,$utc_offset_minutes);
-	
-			}
-			
-		}
-		
-	}
-	
-	if ( /<\/status>/ ) {
-
-		$statuses++;
-	
-		$tstamp = UnixDate(Date_ConvTZ(ParseDate($tstamp),"UTC",$utc_offset),"%H:%M:%S");
-
-		unshift @entry, "<!--$id--><li>$tstamp $text</li>";
-	
-	}
+    unshift @entry, "<!--$id--><li>$tstamp $text</li>"; # unless (m/^\@/, $text);
+  
+  }
 
 }
 
@@ -255,83 +247,85 @@ foreach $_ ( @entry ) {
 }
 $entry .= '</ul>';
 
+print $entry;
+
 
 if ( not $statuses ) {
-	exit 0;
+  exit 0;
 }
 
 for ( $i = 0; $i < 3; ++$i ) {
 
-	if ( $lj = new LJ::Simple ( { user => $config{'lj_user'}, pass => $config{'lj_pass'}, site => $config{'lj_site'} } ) ) {
-		last;
-	} else {
-		sleep 5;
-	}
+  if ( $lj = new LJ::Simple ( { user => $config{'lj_user'}, pass => $config{'lj_pass'}, site => $config{'lj_site'} } ) ) {
+    last;
+  } else {
+    sleep 5;
+  }
 
 }
 
 if ( not defined($lj) ) {
-	die "$0: Failed to login to LiveJournal ($LJ::Simple::error)";
+  die "$0: Failed to login to LiveJournal ($LJ::Simple::error)";
 }
 
 %lj_event=();
 
 $lj->NewEntry(\%lj_event)
-	or die "$0: Failed to create new entry ($LJ::Simple::error)";
+  or die "$0: Failed to create new entry ($LJ::Simple::error)";
 
 $lj->SetProtect(\%lj_event,$config{'lj_sec'})
-	or die "$0: Failed to set protection ($LJ::Simple::error)";
+  or die "$0: Failed to set protection ($LJ::Simple::error)";
 
 $lj->SetEntry(\%lj_event,$entry)
-	or die "$0: Failed to set entry ($LJ::Simple::error)";
+  or die "$0: Failed to set entry ($LJ::Simple::error)";
 
 $lj->SetSubject(\%lj_event,"Twitter summary")
-	or die "$0: Failed to set subject ($LJ::Simple::error)";
+  or die "$0: Failed to set subject ($LJ::Simple::error)";
 
 if ( defined $config{'lj_tags'} ) {
-	@lj_tags = split ',', $config{'lj_tags'};
-	$lj->Setprop_taglist(\%lj_event,@lj_tags)
-		or die "$0: Failed to set tags ($LJ::Simple::error)";
+  @lj_tags = split ',', $config{'lj_tags'};
+  $lj->Setprop_taglist(\%lj_event,@lj_tags)
+    or die "$0: Failed to set tags ($LJ::Simple::error)";
 }
 
 $lj->Setprop_preformatted(\%lj_event,1)
-	or die "$0: Failed to set formatting ($LJ::Simple::error)";
+  or die "$0: Failed to set formatting ($LJ::Simple::error)";
 
 if ( defined $config{'lj_userpic'} ) {
-	$lj->Setprop_picture_keyword(\%lj_event,$config{'lj_userpic'})
-		or die "$0: Failed to set userpic ($LJ::Simple::error)";
+  $lj->Setprop_picture_keyword(\%lj_event,$config{'lj_userpic'})
+    or die "$0: Failed to set userpic ($LJ::Simple::error)";
 }
 
 for ( $i = 0; $i < 3; ++$i ) {
 
-	( $lj_item_id, $lj_anum, $lj_html_id )=$lj->PostEntry(\%lj_event);
+  ( $lj_item_id, $lj_anum, $lj_html_id )=$lj->PostEntry(\%lj_event);
 
-	if ( defined($lj_item_id) ) {
-		last;
-	} else {
-		sleep 5;
-	}
+  if ( defined($lj_item_id) ) {
+    last;
+  } else {
+    sleep 5;
+  }
 
 }
 
 if ( not defined($lj_item_id) ) {
 
-	die "$0: Failed to post entry ($LJ::Simple::error)";
+  die "$0: Failed to post entry ($LJ::Simple::error)";
 
 } else {
 
-	$config{'since_id'} = $latest_id;
+  $config{'since_id'} = $latest_id;
 
-	if ( open CONFIG, ">$configspec" ) {
-	
-			foreach $c ( keys %config ) {
-			
-				print CONFIG "$c=$config{$c}\n";
-			
-			}
-	
-			close CONFIG;
-	
-	}
+  if ( open CONFIG, ">$configspec" ) {
+  
+      foreach $c ( keys %config ) {
+      
+        print CONFIG "$c=$config{$c}\n";
+      
+      }
+  
+      close CONFIG;
+  
+  }
 
 }
