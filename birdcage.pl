@@ -149,7 +149,9 @@ if ( open CONFIG, "$configspec" ) {
 
 } else { die "$0: I think your config should be in `$configspec', but couldn't open it"; }
 
-$url = "http://$config{'twitter_user'}:$config{'twitter_pass'}\@twitter.com/statuses/user_timeline.xml?count=";
+$config{'lj_site'} = 'livejournal.com' unless ($config{'lj_site'});
+
+$url = "http://twitter.com/statuses/user_timeline.xml?screen_name=" . $config{'twitter_user'} ."&count=";
 $url .= $config{'since_id'} ? "100&since_id=$config{'since_id'}" : "20";
 
 for ( $i = 0; $i < 3; ++$i ) {
@@ -261,7 +263,7 @@ if ( not $statuses ) {
 
 for ( $i = 0; $i < 3; ++$i ) {
 
-	if ( $lj = new LJ::Simple ( { user => $config{'lj_user'}, pass => $config{'lj_pass'} } ) ) {
+	if ( $lj = new LJ::Simple ( { user => $config{'lj_user'}, pass => $config{'lj_pass'}, site => $config{'lj_site'} } ) ) {
 		last;
 	} else {
 		sleep 5;
@@ -284,7 +286,7 @@ $lj->SetProtect(\%lj_event,$config{'lj_sec'})
 $lj->SetEntry(\%lj_event,$entry)
 	or die "$0: Failed to set entry ($LJ::Simple::error)";
 
-$lj->SetSubject(\%lj_event,"Twitter, digested by <A HREF=\"http://tinyurl.com/b1rdc4g3\">birdcage.pl</A> ($version)")
+$lj->SetSubject(\%lj_event,"Twitter summary")
 	or die "$0: Failed to set subject ($LJ::Simple::error)";
 
 if ( defined $config{'lj_tags'} ) {
