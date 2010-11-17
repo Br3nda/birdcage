@@ -235,7 +235,7 @@ while ( $_ = shift @tweets ) {
   
     $tstamp = UnixDate(Date_ConvTZ(ParseDate($tstamp),"UTC",$utc_offset),"%H:%M:%S");
 
-    unshift @entry, "<!--$id--><li>$tstamp $text</li>"; # unless (m/^\@/, $text);
+    unshift @entry, "<li><a href=\"http://twitter.com/#!/$config{'twitter_user'}/status/$id\">$tstamp</a> $text</li>"; # unless (m/^\@/, $text);
   
   }
 
